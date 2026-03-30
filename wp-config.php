@@ -84,6 +84,9 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FOR
 	$_SERVER['HTTPS'] = 'on';
 }
 
+// Hard-force canonical host in runtime to prevent old-domain redirects.
+$_SERVER['HTTP_HOST'] = 'eurotruck-production.up.railway.app';
+
 define('WP_HOME', 'https://eurotruck-production.up.railway.app');
 define('WP_SITEURL', 'https://eurotruck-production.up.railway.app');
 

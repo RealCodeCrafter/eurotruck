@@ -116,6 +116,8 @@ rewrite_old_urls_in_database() {
   wp search-replace 'http://www.eurotruck.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
   wp search-replace 'https://unimaxtec.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
   wp search-replace 'http://unimaxtec.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
+  wp search-replace '//eurotruck.uz' '//eurotruck-production.up.railway.app' --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
+  wp search-replace '\/\/eurotruck.uz' '\/\/eurotruck-production.up.railway.app' --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
 }
 
 rewrite_old_asset_urls() {
@@ -134,6 +136,19 @@ rewrite_old_asset_urls() {
     -exec sed -i "s|https://www.eurotruck.uz|${TARGET_SITE_URL}|g" {} + || true
   find "$CSS_DIR" -type f -name "*.css" \
     -exec sed -i "s|http://www.eurotruck.uz|${TARGET_SITE_URL}|g" {} + || true
+  find "$CSS_DIR" -type f -name "*.css" \
+    -exec sed -i "s|//eurotruck.uz|//eurotruck-production.up.railway.app|g" {} + || true
+}
+
+disable_problematic_plugins() {
+  if ! command -v wp >/dev/null 2>&1; then
+    return 0
+  fi
+
+  # AIOWPS rename-login feature is causing runtime warnings and bad redirects on Railway.
+  wp plugin deactivate all-in-one-wp-security-and-firewall --allow-root --path=/var/www/html >/dev/null 2>&1 || true
+  wp option patch update aio_wp_security_configs aiowps_enable_rename_login_page '' --allow-root --path=/var/www/html >/dev/null 2>&1 || true
+  wp option patch update aio_wp_security_configs aiowps_login_page_slug '' --allow-root --path=/var/www/html >/dev/null 2>&1 || true
 }
 
 echo "Waiting for MySQL..."
@@ -144,5 +159,6 @@ disable_broken_aio_security_plugin
 import_sql_every_start
 rewrite_old_urls_in_database
 rewrite_old_asset_urls
+disable_problematic_plugins
 
 exec "$@"
