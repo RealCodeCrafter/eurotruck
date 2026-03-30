@@ -19,36 +19,36 @@ function eurotruck_force_option_url($value) {
     return eurotruck_forced_base_url();
 }
 
+function eurotruck_force_host_in_url($url) {
+    if (empty($url) || !is_string($url)) {
+        return $url;
+    }
+
+    $p = wp_parse_url($url);
+    if (!is_array($p)) {
+        return $url;
+    }
+
+    $path = isset($p['path']) ? $p['path'] : '';
+    $query = isset($p['query']) ? '?' . $p['query'] : '';
+    $fragment = isset($p['fragment']) ? '#' . $p['fragment'] : '';
+
+    return EUROTRUCK_FORCE_SCHEME . '://' . EUROTRUCK_FORCE_HOST . $path . $query . $fragment;
+}
+
 add_filter('pre_option_home', 'eurotruck_force_option_url', 1);
 add_filter('pre_option_siteurl', 'eurotruck_force_option_url', 1);
 add_filter('option_home', 'eurotruck_force_option_url', 1);
 add_filter('option_siteurl', 'eurotruck_force_option_url', 1);
 
-add_filter('home_url', function ($url, $path, $orig_scheme) {
-    return set_url_scheme(eurotruck_forced_base_url(), $orig_scheme) . $path;
-}, 1, 3);
+add_filter('home_url', function ($url) {
+    return eurotruck_force_host_in_url($url);
+}, 1);
 
-add_filter('site_url', function ($url, $path, $scheme) {
-    return set_url_scheme(eurotruck_forced_base_url(), $scheme) . $path;
-}, 1, 3);
+add_filter('site_url', function ($url) {
+    return eurotruck_force_host_in_url($url);
+}, 1);
 
 add_filter('redirect_canonical', function ($redirect_url) {
-    if (empty($redirect_url)) {
-        return $redirect_url;
-    }
-
-    $target = wp_parse_url($redirect_url);
-    if (!is_array($target)) {
-        return $redirect_url;
-    }
-
-    $target['scheme'] = EUROTRUCK_FORCE_SCHEME;
-    $target['host'] = EUROTRUCK_FORCE_HOST;
-    $target['port'] = null;
-
-    $path = isset($target['path']) ? $target['path'] : '/';
-    $query = isset($target['query']) ? '?' . $target['query'] : '';
-    $fragment = isset($target['fragment']) ? '#' . $target['fragment'] : '';
-
-    return EUROTRUCK_FORCE_SCHEME . '://' . EUROTRUCK_FORCE_HOST . $path . $query . $fragment;
+    return eurotruck_force_host_in_url($redirect_url);
 }, 1);
