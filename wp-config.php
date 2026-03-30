@@ -77,6 +77,10 @@ $table_prefix  = 'cegnv_';
  * @link https://codex.wordpress.org/Debugging_in_WordPress
  */
 define('WP_DEBUG', false);
+define('WP_DEBUG_DISPLAY', false);
+define('WP_DEBUG_LOG', false);
+@ini_set('display_errors', '0');
+error_reporting(E_ERROR | E_PARSE);
 
 // Railway reverse proxy HTTPS support.
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {

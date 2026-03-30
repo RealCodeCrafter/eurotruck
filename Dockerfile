@@ -3,7 +3,7 @@ FROM wordpress:6.5-php8.2-fpm
 ENV PHP_FPM_LISTEN=9000
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends nginx supervisor gettext-base ca-certificates default-mysql-client && \
+    apt-get install -y --no-install-recommends nginx supervisor gettext-base ca-certificates default-mysql-client msmtp-mta && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /run/php /var/log/supervisor
 

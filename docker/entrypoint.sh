@@ -198,7 +198,7 @@ rewrite_old_urls_in_database
 rewrite_old_asset_urls
 disable_problematic_plugins
 sanitize_known_malware
-fix_desktop_hero_fallback
 finalize_wp_runtime
+fix_desktop_hero_fallback
 
 exec "$@"
