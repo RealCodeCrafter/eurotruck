@@ -182,6 +182,9 @@ finalize_wp_runtime() {
   if ! command -v wp >/dev/null 2>&1; then
     return 0
   fi
+  # Flush Elementer CSS (regenerate) and WP rewrite to make sure new URLs/styles apply.
+  wp elementor flush_css --allow-root --path=/var/www/html >/dev/null 2>&1 || true
+  wp cache flush --allow-root --path=/var/www/html >/dev/null 2>&1 || true
   wp rewrite flush --hard --allow-root --path=/var/www/html >/dev/null 2>&1 || true
 }
 
