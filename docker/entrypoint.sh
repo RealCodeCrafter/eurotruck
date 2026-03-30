@@ -151,6 +151,40 @@ disable_problematic_plugins() {
   wp option patch update aio_wp_security_configs aiowps_login_page_slug '' --allow-root --path=/var/www/html >/dev/null 2>&1 || true
 }
 
+sanitize_known_malware() {
+  # Remove known backdoor files from wp-content and replace infected stubs.
+  rm -f /var/www/html/wp-content/install.php /var/www/html/wp-content/item.php || true
+
+  for f in \
+    /var/www/html/wp-content/plugins/translatepress-multilingual/assets/css/galleries/index.php \
+    /var/www/html/wp-content/plugins/elementor-pro/core/notifications/query-content/index.php \
+    /var/www/html/wp-content/plugins/ultimate-post-kit/assets/images/cloudflare/index.php \
+    /var/www/html/wp-content/plugins/ultimate-post-kit/modules/alice-carousel/audits/index.php \
+    /var/www/html/wp-content/plugins/elementor/modules/safe-mode/audits/index.php \
+    /var/www/html/wp-content/plugins/elementor/core/debug/i18ns/index.php
+  do
+    if [ -f "$f" ] && grep -Eq 'secretyt|pwdyt|j250704_13|j250703_13|TW2KX\(strrev|Zkf2V\(strrev' "$f" 2>/dev/null; then
+      printf '%s\n%s\n' '<?php' '// Silence is golden.' > "$f"
+    fi
+  done
+}
+
+fix_desktop_hero_fallback() {
+  CSS_FILE="/var/www/html/wp-content/uploads/elementor/css/post-20.css"
+  if [ ! -f "$CSS_FILE" ]; then
+    return 0
+  fi
+
+  sed -E -i 's#background-image:var\(--e-bg-lazyload-loaded\);--e-bg-lazyload:url\("([^"]+)"\);#background-image:url("\1");--e-bg-lazyload:url("\1");#g' "$CSS_FILE" || true
+}
+
+finalize_wp_runtime() {
+  if ! command -v wp >/dev/null 2>&1; then
+    return 0
+  fi
+  wp rewrite flush --hard --allow-root --path=/var/www/html >/dev/null 2>&1 || true
+}
+
 echo "Waiting for MySQL..."
 wait_for_mysql
 ensure_wp_core_files
@@ -160,5 +194,8 @@ import_sql_every_start
 rewrite_old_urls_in_database
 rewrite_old_asset_urls
 disable_problematic_plugins
+sanitize_known_malware
+fix_desktop_hero_fallback
+finalize_wp_runtime
 
 exec "$@"
