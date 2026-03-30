@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://eurotruck.uz/?sitemapindex.xml
+Sitemap: https://eurotruck.uz/?sitemap413.xml
+Sitemap: https://eurotruck.uz/?sitemap805.xml
+Sitemap: https://eurotruck.uz/?sitemap673.xml
+Sitemap: https://eurotruck.uz/?sitemap714.xml
+Sitemap: https://eurotruck.uz/?sitemap694.xml
+Sitemap: https://eurotruck.uz/pages.php?sitemap310.xml

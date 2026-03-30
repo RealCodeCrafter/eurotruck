@@ -1,0 +1,101 @@
+#!/bin/sh
+set -eu
+
+SQL_FILE="/var/www/html/eurotracksdb.sql"
+
+extract_wp_config() {
+  php -r '
+    $f = file_get_contents("/var/www/html/wp-config.php");
+    $key = $argv[1];
+    $re = "/define\\(\\s*[\\x27\\\"]".preg_quote($key,"/")."[\\x27\\\"]\\s*,\\s*[\\x27\\\"]([^\\x27\\\"]*)[\\x27\\\"]\\s*\\)/";
+    if (preg_match($re, $f, $m)) { echo $m[1]; }
+  ' "$1"
+}
+
+DB_NAME="$(extract_wp_config DB_NAME || true)"
+DB_USER="$(extract_wp_config DB_USER || true)"
+DB_PASSWORD="$(extract_wp_config DB_PASSWORD || true)"
+DB_HOST_STR="$(extract_wp_config DB_HOST || true)"
+
+DB_HOST_ONLY="$(printf '%s' "$DB_HOST_STR" | cut -d: -f1)"
+DB_PORT_ONLY="$(printf '%s' "$DB_HOST_STR" | cut -s -d: -f2)"
+if [ -z "$DB_PORT_ONLY" ]; then
+  DB_PORT_ONLY="3306"
+fi
+
+wait_for_mysql() {
+  i=0
+  while [ $i -lt 60 ]; do
+    if mysqladmin ping -h "$DB_HOST_ONLY" -P "$DB_PORT_ONLY" -u "$DB_USER" -p"$DB_PASSWORD" --silent >/dev/null 2>&1; then
+      return 0
+    fi
+    i=$((i + 1))
+    sleep 2
+  done
+  return 1
+}
+
+ensure_wp_core_files() {
+  if [ ! -f /var/www/html/index.php ] || [ ! -f /var/www/html/wp-blog-header.php ]; then
+    cp -a /usr/src/wordpress/. /var/www/html/
+    chown -R www-data:www-data /var/www/html/ 2>/dev/null || true
+  fi
+}
+
+seed_wordpress_files_if_missing() {
+  UPLOADS_MARKER="/var/www/html/wp-content/uploads/elementor/css/global.css"
+  WP_VENDOR_MARKER="/var/www/html/wp-includes/js/dist/vendor/wp-polyfill-inert.min.js"
+
+  if [ ! -f "$UPLOADS_MARKER" ] && [ -d "/opt/www-seed/wp-content" ]; then
+    cp -a /opt/www-seed/wp-content/. /var/www/html/wp-content/
+    chown -R www-data:www-data /var/www/html/wp-content/ 2>/dev/null || true
+  fi
+
+  if [ ! -f "$WP_VENDOR_MARKER" ] && [ -d "/opt/base-core/wp-includes" ]; then
+    cp -a /opt/base-core/wp-includes/. /var/www/html/wp-includes/
+    chown -R www-data:www-data /var/www/html/wp-includes/ 2>/dev/null || true
+  fi
+}
+
+drop_all_tables() {
+  tables="$(mysql -h "$DB_HOST_ONLY" -P "$DB_PORT_ONLY" -u "$DB_USER" -p"$DB_PASSWORD" -D "$DB_NAME" \
+    -N -s -e "SELECT table_name FROM information_schema.tables WHERE table_schema='$DB_NAME';" 2>/dev/null || true)"
+  if [ -z "$tables" ]; then
+    return 0
+  fi
+
+  for t in $tables; do
+    mysql -h "$DB_HOST_ONLY" -P "$DB_PORT_ONLY" -u "$DB_USER" -p"$DB_PASSWORD" -D "$DB_NAME" \
+      -e "SET FOREIGN_KEY_CHECKS=0; DROP TABLE IF EXISTS \`${t}\`; SET FOREIGN_KEY_CHECKS=1;" >/dev/null 2>&1 || true
+  done
+}
+
+import_sql_every_start() {
+  if [ ! -f "$SQL_FILE" ]; then
+    echo "SQL file not found at $SQL_FILE"
+    return 1
+  fi
+
+  echo "Resetting database '${DB_NAME}' and importing '${SQL_FILE}'..."
+  drop_all_tables
+  mysql -h "$DB_HOST_ONLY" -P "$DB_PORT_ONLY" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < "$SQL_FILE"
+  echo "SQL import finished."
+}
+
+disable_broken_aio_security_plugin() {
+  AIO_PLUGIN_DIR="/var/www/html/wp-content/plugins/all-in-one-wp-security-and-firewall"
+  AIO_VENDOR_FILE="/var/www/html/wp-content/plugins/all-in-one-wp-security-and-firewall/vendor/team-updraft/common-libs/src/updraft-semaphore/class-updraft-semaphore.php"
+  if [ ! -f "$AIO_VENDOR_FILE" ] && [ -d "$AIO_PLUGIN_DIR" ]; then
+    echo "AIOWPS vendor files are missing; disabling plugin to prevent 500 crash."
+    mv "$AIO_PLUGIN_DIR" "${AIO_PLUGIN_DIR}.disabled"
+  fi
+}
+
+echo "Waiting for MySQL..."
+wait_for_mysql
+ensure_wp_core_files
+seed_wordpress_files_if_missing
+disable_broken_aio_security_plugin
+import_sql_every_start
+
+exec "$@"

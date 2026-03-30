@@ -1,0 +1,45 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs / temp
+*.log
+.cache/
+.sass-cache/
+
+# Archives / backups
+*.zip
+*.tar
+*.tar.gz
+*.sql.gz
+*.bak
+*.backup
+
+# Keep main SQL dump for auto import
+!eurotracksdb.sql
+
+# WordPress runtime/cache folders
+wp-content/cache/
+wp-content/wflogs/
+wp-content/aiowps_backups/
+wp-content/upgrade/
+wp-content/upgrade-temp-backup/
+
+# Exclude only heavy media that can break GitHub push (>100MB risk)
+wp-content/uploads/**/*.mp4
+wp-content/uploads/**/*.mov
+wp-content/uploads/**/*.avi
+wp-content/uploads/**/*.mkv
+wp-content/uploads/**/*.zip
+wp-content/uploads/**/*.7z
+wp-content/uploads/**/*.tar
+wp-content/uploads/**/*.tar.gz
+
+# Node/composer artifacts if any
+node_modules/
+vendor/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

