@@ -7,13 +7,15 @@
 add_action('wp_head', function () {
     echo '<style id="hero-desktop-force-background">
     @media (min-width:1025px){
-      /* Some widgets in the first hero are flagged hidden-desktop in this dump.
-         Force them visible so the top logo/hero content appears on wide screens. */
-      body.home .elementor-section-wrap > .elementor-top-section:first-child .elementor-hidden-desktop{
+      /* This specific hero section is marked as elementor-hidden-desktop in DB.
+         Force the section itself back to visible on desktop. */
+      body.home .elementor-20 .elementor-element.elementor-element-de6d8e2.elementor-hidden-desktop{
         display:block !important;
+        visibility:visible !important;
+        opacity:1 !important;
       }
-      body.home .elementor-section-wrap > .elementor-top-section:first-child{
-        min-height:420px !important;
+      body.home .elementor-20 .elementor-element.elementor-element-de6d8e2 > .elementor-container{
+        min-height:500px !important;
       }
 
       .elementor-20 .elementor-element.elementor-element-de6d8e2:not(.elementor-motion-effects-element-type-background),
