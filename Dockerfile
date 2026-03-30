@@ -7,6 +7,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /run/php /var/log/supervisor
 
+# Install WP-CLI to perform serialized-safe URL rewrites after SQL import.
+RUN curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x /usr/local/bin/wp
+
 # Ensure WordPress core exists in web root.
 RUN cp -a /usr/src/wordpress/. /var/www/html/
 

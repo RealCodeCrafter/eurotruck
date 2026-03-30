@@ -23,6 +23,9 @@ if [ -z "$DB_PORT_ONLY" ]; then
   DB_PORT_ONLY="3306"
 fi
 
+TABLE_PREFIX="cegnv_"
+TARGET_SITE_URL="https://eurotruck-production.up.railway.app"
+
 wait_for_mysql() {
   i=0
   while [ $i -lt 60 ]; do
@@ -80,6 +83,13 @@ import_sql_every_start() {
   drop_all_tables
   mysql -h "$DB_HOST_ONLY" -P "$DB_PORT_ONLY" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < "$SQL_FILE"
   echo "SQL import finished."
+
+  mysql -h "$DB_HOST_ONLY" -P "$DB_PORT_ONLY" -u "$DB_USER" -p"$DB_PASSWORD" -D "$DB_NAME" -e "
+    UPDATE ${TABLE_PREFIX}options
+    SET option_value='${TARGET_SITE_URL}'
+    WHERE option_name IN ('siteurl','home');
+  " >/dev/null 2>&1 || true
+  echo "Updated siteurl/home to ${TARGET_SITE_URL}"
 }
 
 disable_broken_aio_security_plugin() {
@@ -91,11 +101,42 @@ disable_broken_aio_security_plugin() {
   fi
 }
 
+rewrite_old_urls_in_database() {
+  if ! command -v wp >/dev/null 2>&1; then
+    return 0
+  fi
+
+  wp search-replace 'https://eurotruck.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
+  wp search-replace 'http://eurotruck.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
+  wp search-replace 'https://www.eurotruck.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
+  wp search-replace 'http://www.eurotruck.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
+  wp search-replace 'https://unimaxtec.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
+  wp search-replace 'http://unimaxtec.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
+}
+
+rewrite_old_asset_urls() {
+  CSS_DIR="/var/www/html/wp-content/uploads/elementor/css"
+  if [ ! -d "$CSS_DIR" ]; then
+    return 0
+  fi
+
+  find "$CSS_DIR" -type f -name "*.css" \
+    -exec sed -i "s|https://eurotruck.uz|${TARGET_SITE_URL}|g" {} + || true
+  find "$CSS_DIR" -type f -name "*.css" \
+    -exec sed -i "s|http://eurotruck.uz|${TARGET_SITE_URL}|g" {} + || true
+  find "$CSS_DIR" -type f -name "*.css" \
+    -exec sed -i "s|https://www.eurotruck.uz|${TARGET_SITE_URL}|g" {} + || true
+  find "$CSS_DIR" -type f -name "*.css" \
+    -exec sed -i "s|http://www.eurotruck.uz|${TARGET_SITE_URL}|g" {} + || true
+}
+
 echo "Waiting for MySQL..."
 wait_for_mysql
 ensure_wp_core_files
 seed_wordpress_files_if_missing
 disable_broken_aio_security_plugin
 import_sql_every_start
+rewrite_old_urls_in_database
+rewrite_old_asset_urls
 
 exec "$@"

@@ -84,6 +84,9 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FOR
 	$_SERVER['HTTPS'] = 'on';
 }
 
+define('WP_HOME', 'https://eurotruck-production.up.railway.app');
+define('WP_SITEURL', 'https://eurotruck-production.up.railway.app');
+
 /* That's all, stop editing! Happy blogging. */
 
 /** Absolute path to the WordPress directory. */
