@@ -7,6 +7,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /run/php /var/log/supervisor
 
+# Keep runtime logs clean from plugin PHP warnings on production.
+RUN printf "display_errors=Off\nlog_errors=On\nerror_reporting=E_ERROR | E_PARSE\n" > /usr/local/etc/php/conf.d/zz-production.ini
+
 # Install WP-CLI to perform serialized-safe URL rewrites after SQL import.
 RUN curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
     chmod +x /usr/local/bin/wp
