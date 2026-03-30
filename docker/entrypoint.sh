@@ -106,8 +106,12 @@ rewrite_old_urls_in_database() {
     return 0
   fi
 
+  wp option update home "${TARGET_SITE_URL}" --allow-root --path=/var/www/html >/dev/null 2>&1 || true
+  wp option update siteurl "${TARGET_SITE_URL}" --allow-root --path=/var/www/html >/dev/null 2>&1 || true
+
   wp search-replace 'https://eurotruck.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
   wp search-replace 'http://eurotruck.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
+  wp search-replace 'eurotruck.uz' 'eurotruck-production.up.railway.app' --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
   wp search-replace 'https://www.eurotruck.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
   wp search-replace 'http://www.eurotruck.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
   wp search-replace 'https://unimaxtec.uz' "${TARGET_SITE_URL}" --all-tables --allow-root --path=/var/www/html --skip-columns=guid >/dev/null 2>&1 || true
@@ -124,6 +128,8 @@ rewrite_old_asset_urls() {
     -exec sed -i "s|https://eurotruck.uz|${TARGET_SITE_URL}|g" {} + || true
   find "$CSS_DIR" -type f -name "*.css" \
     -exec sed -i "s|http://eurotruck.uz|${TARGET_SITE_URL}|g" {} + || true
+  find "$CSS_DIR" -type f -name "*.css" \
+    -exec sed -i "s|eurotruck.uz|eurotruck-production.up.railway.app|g" {} + || true
   find "$CSS_DIR" -type f -name "*.css" \
     -exec sed -i "s|https://www.eurotruck.uz|${TARGET_SITE_URL}|g" {} + || true
   find "$CSS_DIR" -type f -name "*.css" \

@@ -43,3 +43,7 @@ vendor/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Keep AIOWPS vendor to avoid runtime fatal/plugin-disable fallback.
+!wp-content/plugins/all-in-one-wp-security-and-firewall/vendor/
+!wp-content/plugins/all-in-one-wp-security-and-firewall/vendor/**
